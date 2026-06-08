@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - TVET Mastermind</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: #f0f2f5; transition: background-color 0.3s; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background-color: #1e293b; color: #f8fafc; display: flex; flex-direction: column; padding: 20px 0; position: fixed; height: 100vh; left: 0; top: 0; }
+        .brand { font-size: 1.5rem; font-weight: bold; text-align: center; margin-bottom: 40px; padding: 0 20px; color: #f59e0b; }
+        .nav-menu { list-style: none; display: flex; flex-direction: column; flex-grow: 1; padding: 0 10px; }
+        .nav-item { margin-bottom: 5px; }
+        .nav-link { display: flex; align-items: center; padding: 14px 20px; color: #cbd5e1; text-decoration: none; border-radius: 8px; font-size: 0.95rem; font-weight: 500; transition: all 0.2s ease; }
+        .nav-link:hover { background-color: #334155; color: #ffffff; }
+        .nav-link.active { background-color: #f59e0b; color: #ffffff; }
+        .nav-icon { width: 22px; height: 22px; margin-right: 15px; fill: currentColor; }
+        .logout-item { margin-top: auto; }
+        .logout-link { color: #f87171; }
+        .logout-link:hover { background-color: rgba(248, 113, 113, 0.1); }
+
+        /* Layout */
+        .main-wrapper { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
+        
+        /* Top Header */
+        .top-header { background: white; padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 50; transition: background-color 0.3s; }
+        .logo-section { display: flex; align-items: center; gap: 16px; }
+        .logo-icon { width: 48px; height: 48px; background: #f59e0b; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.5rem; }
+        .logo-text h1 { font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0; transition: color 0.3s; }
+        .logo-text span { font-size: 0.875rem; color: #f59e0b; font-weight: 500; }
+        .search-section { flex: 1; max-width: 600px; margin-left: 40px; }
+        .search-bar { display: flex; align-items: center; background: #f8fafc; border-radius: 12px; padding: 12px 20px; border: 1px solid #e5e7eb; transition: all 0.3s; }
+        .search-bar svg { width: 20px; height: 20px; color: #9ca3af; margin-right: 12px; }
+        .search-bar input { border: none; outline: none; font-size: 1rem; width: 100%; background: transparent; color: #111827; }
+        .notification-btn { background: #f8fafc; border: none; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 16px; transition: background-color 0.3s; }
+        .notification-btn svg { width: 22px; height: 22px; color: #6b7280; }
+
+        /* Content */
+        .main-content { flex: 1; padding: 30px 40px; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { font-size: 1.75rem; font-weight: 700; color: #111827; margin-bottom: 6px; transition: color 0.3s; }
+        .page-header p { color: #6b7280; font-size: 0.95rem; transition: color 0.3s; }
+        
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .card { background: white; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: background-color 0.3s; }
+        .card-header { display: flex; align-items: center; margin-bottom: 24px; }
+        .card-header svg { width: 22px; height: 22px; margin-right: 10px; color: #f59e0b; }
+        .card-header h2 { font-size: 1.1rem; font-weight: 700; color: #111827; transition: color 0.3s; }
+        
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 8px; transition: color 0.3s; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem; color: #1f2937; background: #fafafa; transition: all 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #f59e0b; background: white; }
+        
+        .btn { width: 100%; padding: 13px; background: #f59e0b; color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .btn:hover { background: #d97706; }
+        
+        .toggle-list { display: flex; flex-direction: column; }
+        .toggle-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
+        .toggle-item:last-child { border-bottom: none; }
+        .toggle-item span { font-size: 0.95rem; color: #374151; transition: color 0.3s; }
+        
+        .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d1d5db; border-radius: 26px; transition: 0.3s; }
+        .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .toggle-switch input:checked + .toggle-slider { background-color: #f59e0b; }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
+
+        /* Dark Mode Styles */
+        body.dark-mode { background-color: #0f172a; }
+        body.dark-mode .top-header,
+        body.dark-mode .card,
+        body.dark-mode .search-bar,
+        body.dark-mode .notification-btn { background-color: #1e293b; }
+        body.dark-mode .logo-text h1,
+        body.dark-mode .card-header h2,
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group select,
+        body.dark-mode .search-bar input { color: #f1f5f9; }
+        body.dark-mode .page-header h1 { color: #f1f5f9; }
+        body.dark-mode .page-header p,
+        body.dark-mode .form-group label,
+        body.dark-mode .toggle-item span { color: #94a3b8; }
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group select { background-color: #334155; border-color: #475569; }
+        body.dark-mode .toggle-item { border-bottom-color: #334155; }
+
+        @media (max-width: 768px) { .sidebar { width: 70px; } .brand span, .nav-text { display: none; } .nav-link { justify-content: center; padding: 14px; } .nav-icon { margin-right: 0; } .main-wrapper { margin-left: 70px; } .top-header { padding: 16px 20px; } .logo-text { display: none; } .search-section { margin-left: 20px; } .main-content { padding: 20px; } .settings-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="brand"><span>TVET</span></div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="index.html" class="nav-link"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span class="nav-text">Home</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg><span class="nav-text">Modules</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg><span class="nav-text">Games</span></a></li>
+            <li class="nav-item"><a href="#" class="nav-link"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg><span class="nav-text">Calendar</span></a></li>
+            <li class="nav-item"><a href="profile.html" class="nav-link"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span class="nav-text">Profile</span></a></li>
+            <li class="nav-item"><a href="setting.html" class="nav-link active"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L3.15 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg><span class="nav-text">Settings</span></a></li>
+            <li class="nav-item logout-item"><a href="logout.html" class="nav-link logout-link"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg><span class="nav-text">Logout</span></a></li>
+        </ul>
+    </nav>
+
+    <div class="main-wrapper">
+        <header class="top-header">
+            <div class="logo-section">
+                <div class="logo-icon">TM</div>
+                <div class="logo-text"><h1>TVET Mastermind</h1><span>Learning Portal</span></div>
+            </div>
+            <div class="search-section">
+                <div class="search-bar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" placeholder="Search settings...">
+                </div>
+            </div>
+            <button class="notification-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></button>
+        </header>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1>Settings</h1>
+                <p>Manage your account, notifications and preferences</p>
+            </div>
+
+            <div class="settings-grid">
+                <div class="card">
+                    <div class="card-header"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg><h2>Edit Profile</h2></div>
+                    <div class="form-group"><label>Full Name</label><input type="text" value="Ahmad Naufal bin Azman"></div>
+                    <div class="form-group"><label>Email Address</label><input type="email" value="ahmad.naufal@student.edu.my"></div>
+                    <div class="form-group"><label>Phone Number</label><input type="tel" placeholder="+60 12-345 6789"></div>
+                    <button class="btn" onclick="alert('Profile saved!')">Save Changes</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><h2>Change Password</h2></div>
+                    <div class="form-group"><label>Current Password</label><input type="password" placeholder="••••••••"></div>
+                    <div class="form-group"><label>New Password</label><input type="password" placeholder="••••••••"></div>
+                    <div class="form-group"><label>Confirm New Password</label><input type="password" placeholder="••••••••"></div>
+                    <button class="btn" onclick="alert('Password updated!')">Update Password</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg><h2>Notifications</h2></div>
+                    <div class="toggle-list">
+                        <div class="toggle-item"><span>New Event Announcements</span><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                        <div class="toggle-item"><span>Module Completion Reminders</span><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                        <div class="toggle-item"><span>Achievement Unlocked Alerts</span><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                        <div class="toggle-item"><span>Weekly Progress Summary</span><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                        <div class="toggle-item"><span>Email Notifications</span><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                        <div class="toggle-item"><span>Push Notifications</span><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg><h2>Theme & Display</h2></div>
+                    <div class="toggle-list">
+                        <div class="toggle-item"><span>Dark Mode</span><label class="toggle-switch"><input type="checkbox" id="darkModeToggle"><span class="toggle-slider"></span></label></div>
+                        <div class="toggle-item"><span>Show Progress Percentages</span><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                        <div class="toggle-item"><span>Animated Transitions</span><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+                        <div class="toggle-item" style="border-bottom: none;"><span>Language / Bahasa</span><select style="width: 140px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.9rem; background: #fafafa;"><option>English</option><option>Bahasa Melayu</option></select></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ===== DARK MODE TOGGLE =====
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            // Load saved preference
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                darkModeToggle.checked = true;
+                document.body.classList.add('dark-mode');
+            }
+            
+            // Toggle dark mode
+            darkModeToggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('darkMode', 'enabled');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('darkMode', 'disabled');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
