@@ -3,30 +3,43 @@ import SwiftUI
 struct DashboardView: View {
     @EnvironmentObject var appState: AppState
     @State private var searchText = ""
+    @State private var showNotifications = false
     
     var body: some View {
-        HStack(spacing: 0) {
-            // Sidebar
-            SidebarView()
-                .frame(width: appState.compactSidebar ? 90 : 260)
-                .background(Color(red: 0.12, green: 0.16, blue: 0.23))
-            
-            // Main Content
-            VStack(spacing: 0) {
-                TopHeaderView(searchText: $searchText)
-                    .padding(.horizontal, 40)
-                    .padding(.vertical, 16)
-                    .background(appState.darkMode ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color.white)
-                    .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+        ZStack(alignment: .topTrailing) {
+            HStack(spacing: 0) {
+                // Sidebar
+                SidebarView()
+                    .frame(width: appState.compactSidebar ? 90 : 260)
+                    .background(Color(red: 0.12, green: 0.16, blue: 0.23))
                 
-                ScrollView {
-                    DashboardContent()
+                // Main Content
+                VStack(spacing: 0) {
+                    TopHeaderView(searchText: $searchText, showNotifications: $showNotifications)
+                        .padding(.horizontal, 40)
+                        .padding(.vertical, 16)
+                        .background(appState.darkMode ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color.white)
+                        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+                    
+                    ScrollView {
+                        DashboardContent()
+                    }
+                    .background(appState.darkMode ? Color(red: 0.08, green: 0.09, blue: 0.11) : Color(red: 0.94, green: 0.95, blue: 0.96))
                 }
-                .background(appState.darkMode ? Color(red: 0.08, green: 0.09, blue: 0.11) : Color(red: 0.94, green: 0.95, blue: 0.96))
+            }
+            .frame(minWidth: 1000, minHeight: 700)
+            .animation(appState.animatedTransitions ? .easeInOut(duration: 0.3) : .none, value: appState.compactSidebar)
+            
+            // Notification Dropdown - At TOP LEVEL to float above everything
+            if showNotifications {
+                NotificationDropdownView(isPresented: $showNotifications)
+                    .padding(.top, 80)
+                    .padding(.trailing, 60)
+                    .zIndex(9999)
+                    .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 10)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .frame(minWidth: 1000, minHeight: 700)
-        .animation(appState.animatedTransitions ? .easeInOut(duration: 0.3) : .none, value: appState.compactSidebar)
     }
 }
 
@@ -39,9 +52,9 @@ struct DashboardContent: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Dashboard Overview")
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(appState.darkMode ? .white : .primary) // FIX: Text color
+                    .foregroundColor(appState.darkMode ? .white : .primary)
                 Text("Welcome back, Admin. Here's what's happening with TVET Mastermind today.")
-                    .foregroundColor(appState.darkMode ? .gray : .secondary) // FIX: Text color
+                    .foregroundColor(appState.darkMode ? .gray : .secondary)
             }
             .padding(.top, 30)
             .padding(.horizontal, 40)
@@ -88,7 +101,7 @@ struct StatCard: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color.white) // FIX: Card background
+        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color.white)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.04), radius: 3, y: 1)
     }
@@ -142,7 +155,7 @@ struct RecentStudentsCard: View {
             }
         }
         .padding(28)
-        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color.white) // FIX: Card background
+        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color.white)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.04), radius: 3, y: 1)
     }
@@ -175,7 +188,7 @@ struct RecentActivityCard: View {
             }
         }
         .padding(28)
-        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color.white) // FIX: Card background
+        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color.white)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.04), radius: 3, y: 1)
     }
@@ -267,11 +280,11 @@ struct SidebarLink: View {
     }
 }
 
-// MARK: - Top Header with Notifications
+// MARK: - Top Header (Simplified - no dropdown here anymore)
 struct TopHeaderView: View {
     @Binding var searchText: String
+    @Binding var showNotifications: Bool
     @EnvironmentObject var appState: AppState
-    @State private var showNotifications = false
     
     var body: some View {
         HStack(spacing: 16) {
@@ -292,45 +305,37 @@ struct TopHeaderView: View {
                 Image(systemName: "magnifyingglass").foregroundColor(.gray)
                 TextField("Search...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .foregroundColor(appState.darkMode ? .white : .primary) // FIX: Search text
+                    .foregroundColor(appState.darkMode ? .white : .primary)
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 20)
             .frame(maxWidth: 600)
-            .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color(red: 0.97, green: 0.98, blue: 0.99)) // FIX: Search background
+            .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color(red: 0.97, green: 0.98, blue: 0.99))
             .cornerRadius(12)
             
-            ZStack(alignment: .topTrailing) {
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        showNotifications.toggle()
-                    }
-                }) {
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showNotifications.toggle()
+                }
+            }) {
+                ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell")
                         .font(.system(size: 22))
-                        .foregroundColor(appState.darkMode ? .white : .gray) // FIX: Bell icon color
+                        .foregroundColor(appState.darkMode ? .white : .gray)
                         .frame(width: 44, height: 44)
-                        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color(red: 0.97, green: 0.98, blue: 0.99)) // FIX: Bell background
+                        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color(red: 0.97, green: 0.98, blue: 0.99))
                         .cornerRadius(12)
-                }
-                
-                if appState.unreadCount > 0 {
-                    Text("\(appState.unreadCount)")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(Color.red)
-                        .clipShape(Circle())
-                        .offset(x: 8, y: -6)
-                }
-            }
-            .overlay(alignment: .topTrailing) {
-                if showNotifications {
-                    NotificationDropdownView(isPresented: $showNotifications)
-                        .offset(x: 20, y: 55)
-                        .zIndex(1)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    
+                    if appState.unreadCount > 0 {
+                        Text("\(appState.unreadCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Color.red)
+                            .clipShape(Circle())
+                            .offset(x: 8, y: -6)
+                    }
                 }
             }
         }
@@ -344,17 +349,19 @@ struct NotificationDropdownView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Header
             HStack {
                 Text("Notifications")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(appState.darkMode ? .white : .primary)
                 Spacer()
                 if appState.unreadCount > 0 {
-                    Button("Mark all read") {
-                        appState.markAllAsRead()
+                    Button(action: { appState.markAllAsRead() }) {
+                        Text("Mark all read")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.orange)
                     }
-                    .font(.system(size: 12))
-                    .foregroundColor(.orange)
+                    .buttonStyle(.plain)
                 }
             }
             .padding(16)
@@ -362,6 +369,7 @@ struct NotificationDropdownView: View {
             
             Divider()
             
+            // List
             if appState.notifications.isEmpty {
                 Text("No notifications")
                     .foregroundColor(.gray)
@@ -382,32 +390,37 @@ struct NotificationDropdownView: View {
                         }
                     }
                 }
-                .frame(maxHeight: 400)
+                .frame(maxHeight: 300)
             }
             
+            // Footer
             if !appState.notifications.isEmpty {
                 Divider()
                 HStack {
-                    Button("Clear all") {
-                        appState.clearAll()
+                    Button(action: { appState.clearAll() }) {
+                        Text("Clear all")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.red)
                     }
-                    .font(.system(size: 13))
-                    .foregroundColor(.red)
+                    .buttonStyle(.plain)
+                    
                     Spacer()
-                    Button("View all") {
-                        print("View all notifications")
+                    
+                    Button(action: { print("View all") }) {
+                        Text("View all")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.orange)
                     }
-                    .font(.system(size: 13))
-                    .foregroundColor(.orange)
+                    .buttonStyle(.plain)
                 }
                 .padding(12)
                 .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color(red: 0.97, green: 0.98, blue: 0.99))
             }
         }
         .frame(width: 350)
-        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color.white) // FIX: Dropdown background
+        .background(appState.darkMode ? Color(red: 0.15, green: 0.17, blue: 0.2) : Color.white)
         .cornerRadius(12)
-        .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+        .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 10)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.gray.opacity(0.1), lineWidth: 1)

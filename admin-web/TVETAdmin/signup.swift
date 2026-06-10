@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SignupView: View {
+    @EnvironmentObject var appState: AppState
+    
     // Form States
     @State private var firstName = ""
     @State private var lastName = ""
@@ -13,6 +15,7 @@ struct SignupView: View {
     // UI States
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showSuccess = false
     
     var body: some View {
         HStack(spacing: 0) {
@@ -20,7 +23,6 @@ struct SignupView: View {
             VStack(spacing: 20) {
                 Spacer()
                 
-                // Graduation Cap Icon
                 ZStack {
                     Circle()
                         .fill(Color.orange)
@@ -93,7 +95,7 @@ struct SignupView: View {
                 
                 // Form
                 VStack(spacing: 18) {
-                    // First & Last Name (Side by Side)
+                    // First & Last Name
                     HStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("First Name")
@@ -102,7 +104,7 @@ struct SignupView: View {
                                 .foregroundColor(.gray)
                             
                             TextField("Ahmad", text: $firstName)
-                                .textFieldStyle(.roundedBorder)
+                                .textFieldStyle(CustomTextFieldStyle())
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -112,7 +114,7 @@ struct SignupView: View {
                                 .foregroundColor(.gray)
                             
                             TextField("Naufal", text: $lastName)
-                                .textFieldStyle(.roundedBorder)
+                                .textFieldStyle(CustomTextFieldStyle())
                         }
                     }
                     
@@ -124,7 +126,7 @@ struct SignupView: View {
                             .foregroundColor(.gray)
                         
                         TextField("you@student.edu.my", text: $email)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(CustomTextFieldStyle())
                     }
                     
                     // Phone
@@ -135,8 +137,7 @@ struct SignupView: View {
                             .foregroundColor(.gray)
                         
                         TextField("+60 12-345 6789", text: $phone)
-                            .textFieldStyle(.roundedBorder)
-
+                            .textFieldStyle(CustomTextFieldStyle())
                     }
                     
                     // Password
@@ -147,7 +148,7 @@ struct SignupView: View {
                             .foregroundColor(.gray)
                         
                         SecureField("At least 8 characters", text: $password)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(CustomTextFieldStyle())
                     }
                     
                     // Confirm Password
@@ -158,7 +159,7 @@ struct SignupView: View {
                             .foregroundColor(.gray)
                         
                         SecureField("Re-enter your password", text: $confirmPassword)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(CustomTextFieldStyle())
                     }
                     
                     // Terms Checkbox
@@ -172,7 +173,7 @@ struct SignupView: View {
                         Text("Privacy Policy")
                             .foregroundColor(.orange)
                     }
-                    .toggleStyle(.checkbox) // Uses native macOS checkbox style
+                    .toggleStyle(.checkbox)
                     .padding(.vertical, 8)
                     
                     // Error Message
@@ -183,6 +184,17 @@ struct SignupView: View {
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(Color.red.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    
+                    // Success Message
+                    if showSuccess {
+                        Text("Account created successfully! Redirecting to login...")
+                            .foregroundColor(.green)
+                            .font(.subheadline)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.green.opacity(0.1))
                             .cornerRadius(8)
                     }
                     
@@ -203,11 +215,13 @@ struct SignupView: View {
                         Text("Already have an account?")
                             .foregroundColor(.gray)
                         
-                        Button("Sign in") {
-                            print("Navigate to Login")
+                        Button(action: {
+                            appState.navigate(to: .login)
+                        }) {
+                            Text("Sign in")
+                                .fontWeight(.semibold)
                         }
                         .foregroundColor(.orange)
-                        .fontWeight(.semibold)
                     }
                     .font(.subheadline)
                     .padding(.top, 8)
@@ -224,7 +238,15 @@ struct SignupView: View {
     }
     
     private func handleSignup() {
-        // Basic Validation
+        showError = false
+        showSuccess = false
+        
+        if firstName.isEmpty || lastName.isEmpty || email.isEmpty || password.isEmpty {
+            showError = true
+            errorMessage = "Please fill in all required fields"
+            return
+        }
+        
         if password != confirmPassword {
             showError = true
             errorMessage = "Passwords do not match"
@@ -237,20 +259,27 @@ struct SignupView: View {
             return
         }
         
+        if !email.contains("@") || !email.contains(".") {
+            showError = true
+            errorMessage = "Please enter a valid email address"
+            return
+        }
+        
         if !agreeToTerms {
             showError = true
             errorMessage = "Please agree to the terms and conditions"
             return
         }
         
-        // If valid
-        showError = false
-        print("Account created for: \(firstName) \(lastName)")
-        // TODO: Add navigation to login or dashboard
+        showSuccess = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            appState.navigate(to: .login)
+        }
     }
 }
 
-// MARK: - Preview
 #Preview {
     SignupView()
+        .environmentObject(AppState())
 }
