@@ -5,32 +5,50 @@ struct DashboardView: View {
     @State private var searchText = ""
     @State private var showNotifications = false
     
+    // Filter the students based on search
+    var filteredStudents: [(String, String, String, Bool)] {
+        let students = [
+            ("Ahmad Naufal", "ahmad.naufal@student.edu.my", "Active", true),
+            ("Siti Aminah", "siti.aminah@student.edu.my", "Pending", false),
+            ("Muhammad Ali", "m.ali@student.edu.my", "Active", true),
+            ("Nurul Izzah", "nurul.izzah@student.edu.my", "Active", true)
+        ]
+        
+        if searchText.isEmpty {
+            return students
+        } else {
+            return students.filter { student in
+                student.0.localizedCaseInsensitiveContains(searchText) ||
+                student.1.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+    
     var body: some View {
         ZStack(alignment: .topTrailing) {
             HStack(spacing: 0) {
-                // Sidebar
                 SidebarView()
                     .frame(width: appState.compactSidebar ? 90 : 260)
                     .background(Color(red: 0.12, green: 0.16, blue: 0.23))
                 
-                // Main Content
                 VStack(spacing: 0) {
                     TopHeaderView(searchText: $searchText, showNotifications: $showNotifications)
                         .padding(.horizontal, 40)
                         .padding(.vertical, 16)
                         .background(appState.darkMode ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color.white)
                         .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+                        .zIndex(1)
                     
                     ScrollView {
-                        DashboardContent()
+                        DashboardContent(searchText: searchText, filteredStudents: filteredStudents)
                     }
                     .background(appState.darkMode ? Color(red: 0.08, green: 0.09, blue: 0.11) : Color(red: 0.94, green: 0.95, blue: 0.96))
+                    .zIndex(0)
                 }
             }
             .frame(minWidth: 1000, minHeight: 700)
             .animation(appState.animatedTransitions ? .easeInOut(duration: 0.3) : .none, value: appState.compactSidebar)
             
-            // Notification Dropdown - At TOP LEVEL to float above everything
             if showNotifications {
                 NotificationDropdownView(isPresented: $showNotifications)
                     .padding(.top, 80)
@@ -46,6 +64,8 @@ struct DashboardView: View {
 // MARK: - Dashboard Content
 struct DashboardContent: View {
     @EnvironmentObject var appState: AppState
+    let searchText: String
+    let filteredStudents: [(String, String, String, Bool)]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 30) {
@@ -69,7 +89,7 @@ struct DashboardContent: View {
             .padding(.horizontal, 40)
             
             HStack(alignment: .top, spacing: 24) {
-                RecentStudentsCard()
+                RecentStudentsCard(filteredStudents: filteredStudents)
                     .frame(maxWidth: .infinity)
                 RecentActivityCard()
                     .frame(width: 350)
@@ -110,12 +130,7 @@ struct StatCard: View {
 // MARK: - Recent Students
 struct RecentStudentsCard: View {
     @EnvironmentObject var appState: AppState
-    let students = [
-        ("Ahmad Naufal", "ahmad.naufal@student.edu.my", "Active", true),
-        ("Siti Aminah", "siti.aminah@student.edu.my", "Pending", false),
-        ("Muhammad Ali", "m.ali@student.edu.my", "Active", true),
-        ("Nurul Izzah", "nurul.izzah@student.edu.my", "Active", true)
-    ]
+    let filteredStudents: [(String, String, String, Bool)]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -127,31 +142,39 @@ struct RecentStudentsCard: View {
                     .font(.system(size: 14, weight: .semibold))
             }
             
-            HStack {
-                Text("Name").frame(maxWidth: .infinity, alignment: .leading)
-                Text("Email").frame(maxWidth: .infinity, alignment: .leading)
-                Text("Status").frame(width: 80, alignment: .leading)
-            }
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundColor(appState.darkMode ? .gray : .secondary)
-            .textCase(.uppercase)
-            .padding(.bottom, 10)
-            
-            ForEach(students, id: \.0) { student in
+            // Show search results message
+            if filteredStudents.isEmpty {
+                Text("No students found")
+                    .foregroundColor(.gray)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+            } else {
                 HStack {
-                    Text(student.0).frame(maxWidth: .infinity, alignment: .leading).foregroundColor(appState.darkMode ? .white : .primary)
-                    Text(student.1).frame(maxWidth: .infinity, alignment: .leading).foregroundColor(appState.darkMode ? .gray : .secondary)
-                    Text(student.2)
-                        .font(.system(size: 12, weight: .semibold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(student.3 ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
-                        .foregroundColor(student.3 ? .green : .orange)
-                        .cornerRadius(20)
-                        .frame(width: 80, alignment: .leading)
+                    Text("NAME").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("EMAIL").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("STATUS").frame(width: 80, alignment: .leading)
                 }
-                .padding(.vertical, 12)
-                Divider().background(appState.darkMode ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(appState.darkMode ? .gray : .secondary)
+                .textCase(.uppercase)
+                .padding(.bottom, 10)
+                
+                ForEach(filteredStudents, id: \.0) { student in
+                    HStack {
+                        Text(student.0).frame(maxWidth: .infinity, alignment: .leading).foregroundColor(appState.darkMode ? .white : .primary)
+                        Text(student.1).frame(maxWidth: .infinity, alignment: .leading).foregroundColor(appState.darkMode ? .gray : .secondary)
+                        Text(student.2)
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(student.3 ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
+                            .foregroundColor(student.3 ? .green : .orange)
+                            .cornerRadius(20)
+                            .frame(width: 80, alignment: .leading)
+                    }
+                    .padding(.vertical, 12)
+                    Divider().background(appState.darkMode ? Color.gray.opacity(0.3) : Color.gray.opacity(0.2))
+                }
             }
         }
         .padding(28)
