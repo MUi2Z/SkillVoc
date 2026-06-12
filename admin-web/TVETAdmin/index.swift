@@ -5,7 +5,6 @@ struct DashboardView: View {
     @State private var searchText = ""
     @State private var showNotifications = false
     
-    // Filter the students based on search
     var filteredStudents: [(String, String, String, Bool)] {
         let students = [
             ("Ahmad Naufal", "ahmad.naufal@student.edu.my", "Active", true),
@@ -61,7 +60,6 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - Dashboard Content
 struct DashboardContent: View {
     @EnvironmentObject var appState: AppState
     let searchText: String
@@ -73,13 +71,12 @@ struct DashboardContent: View {
                 Text("Dashboard Overview")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(appState.darkMode ? .white : .primary)
-                Text("Welcome back, Admin. Here's what's happening with TVET Mastermind today.")
+                Text("Welcome back, Admin. Here's what's happening with SkillVoc today.")
                     .foregroundColor(appState.darkMode ? .gray : .secondary)
             }
             .padding(.top, 30)
             .padding(.horizontal, 40)
             
-            // Stats Grid
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 24) {
                 StatCard(title: "Total Students", value: "1,248", icon: "person.3.fill", trend: "↑ 12% from last month", trendUp: true)
                 StatCard(title: "Active Modules", value: "42", icon: "book.fill", trend: "↑ 3 new this week", trendUp: true)
@@ -100,7 +97,6 @@ struct DashboardContent: View {
     }
 }
 
-// MARK: - Stat Card
 struct StatCard: View {
     @EnvironmentObject var appState: AppState
     let title: String
@@ -127,7 +123,6 @@ struct StatCard: View {
     }
 }
 
-// MARK: - Recent Students
 struct RecentStudentsCard: View {
     @EnvironmentObject var appState: AppState
     let filteredStudents: [(String, String, String, Bool)]
@@ -142,7 +137,6 @@ struct RecentStudentsCard: View {
                     .font(.system(size: 14, weight: .semibold))
             }
             
-            // Show search results message
             if filteredStudents.isEmpty {
                 Text("No students found")
                     .foregroundColor(.gray)
@@ -184,7 +178,6 @@ struct RecentStudentsCard: View {
     }
 }
 
-// MARK: - Recent Activity
 struct RecentActivityCard: View {
     @EnvironmentObject var appState: AppState
     let activities = [
@@ -217,20 +210,24 @@ struct RecentActivityCard: View {
     }
 }
 
-// MARK: - Sidebar
 struct SidebarView: View {
     @EnvironmentObject var appState: AppState
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.orange)
+                Image("WebLogo")
+                    .resizable()
+                    .scaledToFit()
                     .frame(width: 48, height: 48)
-                    .overlay(Text("TM").font(.system(size: 24, weight: .bold)).foregroundColor(.white))
+                    .cornerRadius(12)
+//                RoundedRectangle(cornerRadius: 12)
+//                    .fill(Color.orange)
+//                    .frame(width: 48, height: 48)
+//                    .overlay(Text("SV").font(.system(size: 24, weight: .bold)).foregroundColor(.white))
                 
                 if !appState.compactSidebar {
-                    Text("TVET")
+                    Text("SkillVoc")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
                         .transition(.opacity)
@@ -251,6 +248,9 @@ struct SidebarView: View {
                 }
                 SidebarLink(icon: "calendar", text: "Calendar", isActive: appState.currentView == .calendar, compact: appState.compactSidebar) {
                     appState.navigate(to: .calendar)
+                }
+                SidebarLink(icon: "arrow.up.arrow.down", text: "Lift", isActive: appState.currentView == .lift, compact: appState.compactSidebar) {
+                    appState.navigate(to: .lift)
                 }
                 SidebarLink(icon: "person.fill", text: "Profile", isActive: appState.currentView == .profile, compact: appState.compactSidebar) {
                     appState.navigate(to: .profile)
@@ -303,7 +303,6 @@ struct SidebarLink: View {
     }
 }
 
-// MARK: - Top Header (Simplified - no dropdown here anymore)
 struct TopHeaderView: View {
     @Binding var searchText: String
     @Binding var showNotifications: Bool
@@ -315,10 +314,10 @@ struct TopHeaderView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color.orange)
                     .frame(width: 48, height: 48)
-                    .overlay(Text("TM").font(.system(size: 24, weight: .bold)).foregroundColor(.white))
+                    .overlay(Text("SV").font(.system(size: 24, weight: .bold)).foregroundColor(.white))
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("TVET Mastermind").font(.system(size: 20, weight: .bold)).foregroundColor(appState.darkMode ? .white : .primary)
+                    Text("SkillVoc").font(.system(size: 20, weight: .bold)).foregroundColor(appState.darkMode ? .white : .primary)
                     Text("Learning Portal").font(.system(size: 14)).foregroundColor(.orange)
                 }
             }
@@ -365,14 +364,12 @@ struct TopHeaderView: View {
     }
 }
 
-// MARK: - Notification Dropdown
 struct NotificationDropdownView: View {
     @Binding var isPresented: Bool
     @EnvironmentObject var appState: AppState
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
             HStack {
                 Text("Notifications")
                     .font(.system(size: 16, weight: .bold))
@@ -392,7 +389,6 @@ struct NotificationDropdownView: View {
             
             Divider()
             
-            // List
             if appState.notifications.isEmpty {
                 Text("No notifications")
                     .foregroundColor(.gray)
@@ -416,7 +412,6 @@ struct NotificationDropdownView: View {
                 .frame(maxHeight: 300)
             }
             
-            // Footer
             if !appState.notifications.isEmpty {
                 Divider()
                 HStack {

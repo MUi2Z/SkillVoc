@@ -10,7 +10,6 @@ struct LoginView: View {
     
     var body: some View {
         HStack(spacing: 0) {
-            // Left Side - Dark Blue
             VStack(spacing: 20) {
                 Spacer()
                 
@@ -25,14 +24,14 @@ struct LoginView: View {
                         .foregroundColor(.white)
                 }
                 
-                Text("Welcome to TVET Mastermind")
+                Text("Welcome to SkillVoc")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                 
-                Text("The modern learning platform for vocational and technical education. Learn through modules and master skills through interactive games.")
+                Text("The modern learning platform for vocational and technical education.")
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -50,7 +49,6 @@ struct LoginView: View {
             )
             .ignoresSafeArea()
             
-            // Right Side - White
             VStack(spacing: 0) {
                 Spacer()
                 
@@ -60,12 +58,12 @@ struct LoginView: View {
                             .fill(Color.orange)
                             .frame(width: 48, height: 48)
                         
-                        Text("TM")
+                        Text("SV")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(.white)
                     }
                     
-                    Text("TVET Mastermind")
+                    Text("SkillVoc")
                         .font(.title2)
                         .fontWeight(.bold)
                 }
@@ -170,7 +168,6 @@ struct LoginView: View {
         }
         
         if email.contains("@") && password.count >= 6 {
-            print("Login successful with: \(email)")
             appState.login()
         } else {
             showError = true
@@ -179,7 +176,6 @@ struct LoginView: View {
     }
 }
 
-// MARK: - Custom TextField Style
 struct CustomTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
@@ -197,7 +193,6 @@ struct CustomTextFieldStyle: TextFieldStyle {
     }
 }
 
-// MARK: - Checkbox Toggle Style
 struct CheckboxToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         Button(action: {

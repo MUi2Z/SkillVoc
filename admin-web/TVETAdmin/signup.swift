@@ -3,7 +3,6 @@ import SwiftUI
 struct SignupView: View {
     @EnvironmentObject var appState: AppState
     
-    // Form States
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var email = ""
@@ -12,14 +11,12 @@ struct SignupView: View {
     @State private var confirmPassword = ""
     @State private var agreeToTerms = false
     
-    // UI States
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showSuccess = false
     
     var body: some View {
         HStack(spacing: 0) {
-            // Left Side - Dark Blue
             VStack(spacing: 20) {
                 Spacer()
                 
@@ -34,14 +31,14 @@ struct SignupView: View {
                         .foregroundColor(.white)
                 }
                 
-                Text("Join TVET Mastermind")
+                Text("Join SkillVoc")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                 
-                Text("Start your vocational and technical education journey today. Access interactive modules, track your progress, and earn achievements.")
+                Text("Start your vocational and technical education journey today.")
                     .font(.subheadline)
                     .foregroundColor(.gray)
                     .multilineTextAlignment(.center)
@@ -59,29 +56,26 @@ struct SignupView: View {
             )
             .ignoresSafeArea()
             
-            // Right Side - White
             VStack(alignment: .leading, spacing: 0) {
                 Spacer()
                 
-                // Logo
                 HStack(spacing: 12) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.orange)
                             .frame(width: 48, height: 48)
                         
-                        Text("TM")
+                        Text("SV")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundColor(.white)
                     }
                     
-                    Text("TVET Mastermind")
+                    Text("SkillVoc")
                         .font(.title2)
                         .fontWeight(.bold)
                 }
                 .padding(.bottom, 30)
                 
-                // Header
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Create account")
                         .font(.title)
@@ -93,9 +87,7 @@ struct SignupView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, 28)
                 
-                // Form
                 VStack(spacing: 18) {
-                    // First & Last Name
                     HStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("First Name")
@@ -118,7 +110,6 @@ struct SignupView: View {
                         }
                     }
                     
-                    // Email
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Email Address")
                             .font(.subheadline)
@@ -129,7 +120,6 @@ struct SignupView: View {
                             .textFieldStyle(CustomTextFieldStyle())
                     }
                     
-                    // Phone
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Phone Number")
                             .font(.subheadline)
@@ -140,7 +130,6 @@ struct SignupView: View {
                             .textFieldStyle(CustomTextFieldStyle())
                     }
                     
-                    // Password
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Password")
                             .font(.subheadline)
@@ -151,7 +140,6 @@ struct SignupView: View {
                             .textFieldStyle(CustomTextFieldStyle())
                     }
                     
-                    // Confirm Password
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Confirm Password")
                             .font(.subheadline)
@@ -162,7 +150,6 @@ struct SignupView: View {
                             .textFieldStyle(CustomTextFieldStyle())
                     }
                     
-                    // Terms Checkbox
                     Toggle(isOn: $agreeToTerms) {
                         Text("I agree to the ")
                             .foregroundColor(.gray) +
@@ -176,7 +163,6 @@ struct SignupView: View {
                     .toggleStyle(.checkbox)
                     .padding(.vertical, 8)
                     
-                    // Error Message
                     if showError {
                         Text(errorMessage)
                             .foregroundColor(.red)
@@ -187,9 +173,8 @@ struct SignupView: View {
                             .cornerRadius(8)
                     }
                     
-                    // Success Message
                     if showSuccess {
-                        Text("Account created successfully! Redirecting to login...")
+                        Text("Account created successfully! Redirecting...")
                             .foregroundColor(.green)
                             .font(.subheadline)
                             .padding()
@@ -198,7 +183,6 @@ struct SignupView: View {
                             .cornerRadius(8)
                     }
                     
-                    // Sign Up Button
                     Button(action: handleSignup) {
                         Text("Create Account")
                             .font(.headline)
@@ -210,7 +194,6 @@ struct SignupView: View {
                             .cornerRadius(8)
                     }
                     
-                    // Sign In Link
                     HStack(spacing: 4) {
                         Text("Already have an account?")
                             .foregroundColor(.gray)

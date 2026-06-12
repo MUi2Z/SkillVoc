@@ -3,7 +3,7 @@ import Combine
 
 @main
 struct TVETAdminApp: App {
-    @StateObject private var appState = AppState()
+    @StateObject var appState = AppState()
     
     var body: some Scene {
         WindowGroup {
@@ -13,18 +13,15 @@ struct TVETAdminApp: App {
     }
 }
 
-// App State Manager
 class AppState: ObservableObject {
     @Published var currentView: AppView = .login
     @Published var isLoggedIn = false
     
-    // Settings
     @Published var darkMode = false
     @Published var compactSidebar = false
     @Published var showProgressPercentages = true
     @Published var animatedTransitions = true
     
-    // Notifications
     @Published var notifications: [Notification] = [
         Notification(id: 1, title: "New module published", message: "Web Dev Basics is now available", time: "2 hours ago", isRead: false),
         Notification(id: 2, title: "Student completed course", message: "Siti Aminah completed Intro to Coding", time: "4 hours ago", isRead: false),
@@ -32,7 +29,6 @@ class AppState: ObservableObject {
         Notification(id: 4, title: "New game added", message: "Code Quest added to library", time: "2 days ago", isRead: true)
     ]
     
-    // Notification Preferences
     @Published var notifEvents = true
     @Published var notifModules = true
     @Published var notifAchievements = true
@@ -41,7 +37,7 @@ class AppState: ObservableObject {
     @Published var notifPush = false
     
     enum AppView: String {
-        case login, dashboard, profile, settings, modules, games, calendar, logout, signup
+        case login, dashboard, profile, settings, modules, games, calendar, logout, signup, lift
     }
     
     func login() {
@@ -91,7 +87,6 @@ class AppState: ObservableObject {
     }
 }
 
-// Notification Model
 struct Notification: Identifiable {
     let id: Int
     let title: String

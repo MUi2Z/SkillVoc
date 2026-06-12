@@ -18,9 +18,20 @@ struct ContentView: View {
                 SettingsView()
             case .logout:
                 LogoutView()
-            default:
-                DashboardView()
+            case .calendar:
+                CalendarEventsView()
+            case .games:
+                GamesView()
+            case .modules:
+                ModuleManagementView()
+            case .lift:
+                SokSokTowerView()
             }
         }
     }
+}
+
+#Preview {
+    ContentView()
+        .environmentObject(AppState())
 }

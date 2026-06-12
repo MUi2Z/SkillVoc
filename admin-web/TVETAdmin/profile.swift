@@ -3,8 +3,6 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject var appState: AppState
     @State private var showNotifications = false
-    
-    // Edit Profile States
     @State private var isEditingProfile = false
     @State private var editedFullName = "Ahmad Naufal bin Azman"
     @State private var editedEmail = "ahmad.naufal@student.edu.my"
@@ -13,12 +11,10 @@ struct ProfileView: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             HStack(spacing: 0) {
-                // Sidebar
                 SidebarView()
                     .frame(width: appState.compactSidebar ? 90 : 260)
                     .background(Color(red: 0.12, green: 0.16, blue: 0.23))
                 
-                // Main Content
                 VStack(spacing: 0) {
                     TopHeaderView(searchText: .constant(""), showNotifications: $showNotifications)
                         .padding(.horizontal, 40)
@@ -68,7 +64,6 @@ struct ProfileView: View {
             .frame(minWidth: 1000, minHeight: 700)
             .animation(appState.animatedTransitions ? .easeInOut(duration: 0.3) : .none, value: appState.compactSidebar)
             
-            // Notification Dropdown
             if showNotifications {
                 NotificationDropdownView(isPresented: $showNotifications)
                     .padding(.top, 80)
@@ -89,7 +84,6 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - Profile Banner
 struct ProfileBannerView: View {
     @Binding var isEditingProfile: Bool
     @Binding var editedFullName: String
@@ -122,7 +116,6 @@ struct ProfileBannerView: View {
     }
 }
 
-// MARK: - Edit Profile Sheet
 struct EditProfileSheet: View {
     @Environment(\.dismiss) var dismiss
     @Binding var isPresented: Bool
@@ -157,7 +150,6 @@ struct EditProfileSheet: View {
     }
 }
 
-// MARK: - Stat Card
 struct ProfileStatCard: View {
     @EnvironmentObject var appState: AppState
     let title: String
@@ -172,7 +164,6 @@ struct ProfileStatCard: View {
     }
 }
 
-// MARK: - Enrolled Courses Card
 struct EnrolledCoursesCard: View {
     @EnvironmentObject var appState: AppState
     let courses = [("🏗️", "Construction Technology", 0.65), ("💻", "Information Technology (KSK)", 0.40), ("🔬", "Science Home Economics (SRT)", 0.20)]
@@ -200,7 +191,6 @@ struct EnrolledCoursesCard: View {
     }
 }
 
-// MARK: - Recent Achievements Card
 struct RecentAchievementsCard: View {
     @EnvironmentObject var appState: AppState
     let achievements = [("🏆", "First Module Completed", "Earned January 2026"), ("🎮", "First Game Completed", "Earned February 2026"), ("🏗️", "Construction Level 1 Cleared", "Earned March 2026"), ("💻", "IT Level 1 Cleared", "Earned April 2026")]

@@ -4,13 +4,9 @@ struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @State private var showNotifications = false
     @State private var showSaveSuccess = false
-    
-    // Edit Profile Fields
     @State private var fullName = "Ahmad Naufal bin Azman"
     @State private var email = "ahmad.naufal@student.edu.my"
     @State private var phone = "+60 12-345 6789"
-    
-    // Change Password Fields
     @State private var currentPassword = ""
     @State private var newPassword = ""
     @State private var confirmPassword = ""
@@ -106,7 +102,6 @@ struct SettingsView: View {
             .frame(minWidth: 1000, minHeight: 700)
             .animation(appState.animatedTransitions ? .easeInOut(duration: 0.3) : .none, value: appState.compactSidebar)
             
-            // Notification Dropdown
             if showNotifications {
                 NotificationDropdownView(isPresented: $showNotifications)
                     .padding(.top, 80)
@@ -134,7 +129,6 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Reusable Components
 struct SettingsCard<Content: View>: View {
     let title: String; let icon: String; var darkMode: Bool = false; @ViewBuilder var content: Content
     var body: some View {
