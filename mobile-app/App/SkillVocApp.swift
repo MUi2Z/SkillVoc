@@ -1,8 +1,19 @@
-//
-//  SkillVocApp.swift
-//  
-//
-//  Created by MUi2Z on 04/06/2026.
-//
+import SwiftUI
 
-import Foundation
+@main
+struct SkillVocApp: App {
+
+    @StateObject private var appState = AppState.shared
+
+    var body: some Scene {
+        WindowGroup {
+            if appState.isLoggedIn {
+                MainTabView()
+                    .environmentObject(appState)
+            } else {
+                LoginView()
+                    .environmentObject(appState)
+            }
+        }
+    }
+}
