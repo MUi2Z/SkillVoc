@@ -1,14 +1,16 @@
 import SwiftUI
+import Combine
+import FirebaseFirestore
+import FirebaseAuth
 
 struct CalendarEvent: Identifiable {
-    let id = UUID()
+    let id: String
     let title: String
     let description: String
     let date: Date
     let endDate: Date
     let location: String
     let type: EventType
-    let registeredCount: Int
     let maxCount: Int
 
     enum EventType: String {
@@ -37,10 +39,63 @@ struct CalendarEvent: Identifiable {
             }
         }
     }
+}
 
-    var registrationProgress: Double {
-        guard maxCount > 0 else { return 0 }
-        return Double(registeredCount) / Double(maxCount)
+class EventRegistrationManager: ObservableObject {
+    @Published var registrationCounts: [String: Int] = [:]
+    @Published var registeredEventIds: Set<String> = []
+
+    private let db = Firestore.firestore()
+
+    func fetchRegistrations(for eventId: String) {
+        db.collection("events").document(eventId).collection("registrations")
+            .addSnapshotListener { [weak self] snapshot, _ in
+                self?.registrationCounts[eventId] = snapshot?.documents.count ?? 0
+            }
+    }
+
+    func checkIfRegistered(eventId: String) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        db.collection("events").document(eventId).collection("registrations")
+            .document(uid).getDocument { [weak self] doc, _ in
+                if doc?.exists == true {
+                    self?.registeredEventIds.insert(eventId)
+                }
+            }
+    }
+
+    func register(eventId: String, userName: String, completion: @escaping (Bool, String?) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(false, "Please log in to register.")
+            return
+        }
+        let data: [String: Any] = [
+            "uid": uid,
+            "name": userName,
+            "registeredAt": FieldValue.serverTimestamp()
+        ]
+        db.collection("events").document(eventId).collection("registrations")
+            .document(uid).setData(data) { [weak self] error in
+                if let error = error {
+                    completion(false, error.localizedDescription)
+                } else {
+                    self?.registeredEventIds.insert(eventId)
+                    completion(true, nil)
+                }
+            }
+    }
+
+    func unregister(eventId: String, completion: @escaping (Bool) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        db.collection("events").document(eventId).collection("registrations")
+            .document(uid).delete { [weak self] error in
+                if error == nil {
+                    self?.registeredEventIds.remove(eventId)
+                    completion(true)
+                } else {
+                    completion(false)
+                }
+            }
     }
 }
 
@@ -61,39 +116,37 @@ let sampleEvents: [CalendarEvent] = {
     let (d6s, d6e) = makeDate(8, 8, 10)
 
     return [
-        CalendarEvent(title: "TVET Skills Workshop",
+        CalendarEvent(id: "event_workshop_1", title: "TVET Skills Workshop",
                       description: "Practical hands-on training session for all enrolled students.",
-                      date: d1s, endDate: d1e, location: "Lab A",
-                      type: .workshop, registeredCount: 36, maxCount: 50),
-        CalendarEvent(title: "TVET Innovation Competition",
+                      date: d1s, endDate: d1e, location: "Lab A", type: .workshop, maxCount: 50),
+        CalendarEvent(id: "event_competition_1", title: "TVET Innovation Competition",
                       description: "Annual competition showcasing student innovation and vocational projects.",
-                      date: d2s, endDate: d2e, location: "Innovation Hall",
-                      type: .competition, registeredCount: 65, maxCount: 100),
-        CalendarEvent(title: "Career Guidance Seminar",
+                      date: d2s, endDate: d2e, location: "Innovation Hall", type: .competition, maxCount: 100),
+        CalendarEvent(id: "event_seminar_1", title: "Career Guidance Seminar",
                       description: "Industry professionals share TVET career pathways and opportunities.",
-                      date: d3s, endDate: d3e, location: "Hall B",
-                      type: .seminar, registeredCount: 40, maxCount: 80),
-        CalendarEvent(title: "Automotive Theory Assessment",
+                      date: d3s, endDate: d3e, location: "Hall B", type: .seminar, maxCount: 80),
+        CalendarEvent(id: "event_assessment_1", title: "Automotive Theory Assessment",
                       description: "Written test covering engine systems and vehicle diagnostics.",
-                      date: d4s, endDate: d4e, location: "Exam Hall",
-                      type: .assessment, registeredCount: 28, maxCount: 30),
-        CalendarEvent(title: "Network Systems Class",
+                      date: d4s, endDate: d4e, location: "Exam Hall", type: .assessment, maxCount: 30),
+        CalendarEvent(id: "event_class_1", title: "Network Systems Class",
                       description: "Introduction to LAN/WAN configuration and network protocols.",
-                      date: d5s, endDate: d5e, location: "ICT Lab",
-                      type: .class_, registeredCount: 22, maxCount: 35),
-        CalendarEvent(title: "Culinary Skills Workshop",
+                      date: d5s, endDate: d5e, location: "ICT Lab", type: .class_, maxCount: 35),
+        CalendarEvent(id: "event_culinary_1", title: "Culinary Skills Workshop",
                       description: "Hands-on food preparation and kitchen safety training.",
-                      date: d6s, endDate: d6e, location: "Culinary Lab",
-                      type: .workshop, registeredCount: 18, maxCount: 25),
+                      date: d6s, endDate: d6e, location: "Culinary Lab", type: .workshop, maxCount: 25),
     ]
 }()
 
 struct CalendarView: View {
 
     @Binding var showSidebar: Bool
+    @EnvironmentObject var appState: AppState
+    @StateObject private var regManager = EventRegistrationManager()
+
     @State private var selectedDate = Date()
     @State private var displayedMonth = Date()
     @State private var selectedTab = 0
+    @State private var selectedEventForRegistration: CalendarEvent? = nil
 
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible()), count: 7)
@@ -125,7 +178,7 @@ struct CalendarView: View {
                     HStack(spacing: 0) {
                         ForEach(["Monthly View"].indices, id: \.self) { i in
                             Button(action: { withAnimation { selectedTab = i } }) {
-                                Text(["Monthly View"][i])
+                                Text(["Monthly View"    ][i])
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(selectedTab == i ? .white : Color(hex: "#3C3C43"))
                                     .padding(.horizontal, 14)
@@ -140,7 +193,6 @@ struct CalendarView: View {
                     .padding(.bottom, 16)
 
                     VStack(spacing: 12) {
-
                         HStack {
                             Button(action: { changeMonth(by: -1) }) {
                                 Image(systemName: "chevron.left")
@@ -222,8 +274,17 @@ struct CalendarView: View {
                             .padding(.horizontal, 20)
                         } else {
                             ForEach(eventsOnSelectedDate) { event in
-                                EventCard(event: event)
-                                    .padding(.horizontal, 20)
+                                EventCard(
+                                    event: event,
+                                    regManager: regManager,
+                                    userName: appState.userName,
+                                    onRegisterTap: { selectedEventForRegistration = event }
+                                )
+                                .padding(.horizontal, 20)
+                                .onAppear {
+                                    regManager.fetchRegistrations(for: event.id)
+                                    regManager.checkIfRegistered(eventId: event.id)
+                                }
                             }
                         }
                     }
@@ -233,6 +294,13 @@ struct CalendarView: View {
         }
         .navigationTitle("Calendar")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $selectedEventForRegistration) { event in
+            EventRegistrationSheet(
+                event: event,
+                regManager: regManager,
+                userName: appState.userName
+            )
+        }
     }
 
     private func daysInMonth() -> [Date?] {
@@ -278,6 +346,209 @@ struct CalendarView: View {
     }
 }
 
+struct EventRegistrationSheet: View {
+    let event: CalendarEvent
+    @ObservedObject var regManager: EventRegistrationManager
+    let userName: String
+    @Environment(\.dismiss) var dismiss
+    @State private var isLoading = false
+    @State private var message = ""
+    @State private var success = false
+
+    var isRegistered: Bool { regManager.registeredEventIds.contains(event.id) }
+    var registeredCount: Int { regManager.registrationCounts[event.id] ?? 0 }
+    var isFull: Bool { registeredCount >= event.maxCount }
+
+    private let dateFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "d MMM yyyy"; return f
+    }()
+    private let timeFmt: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "h:mm a"; return f
+    }()
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color(hex: "#F5F0EB").ignoresSafeArea()
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+
+                        ZStack {
+                            event.type.color.opacity(0.1).frame(height: 140)
+                            VStack(spacing: 10) {
+                                Image(systemName: event.type.icon)
+                                    .font(.system(size: 44))
+                                    .foregroundColor(event.type.color)
+                                Text(event.title)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(Color(hex: "#1C1C1E"))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 20)
+                            }
+                        }
+                        .cornerRadius(16)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "calendar").foregroundColor(event.type.color)
+                                Text(dateFmt.string(from: event.date))
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#1C1C1E"))
+                            }
+                            HStack(spacing: 10) {
+                                Image(systemName: "clock").foregroundColor(event.type.color)
+                                Text("\(timeFmt.string(from: event.date)) – \(timeFmt.string(from: event.endDate))")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#1C1C1E"))
+                            }
+                            HStack(spacing: 10) {
+                                Image(systemName: "mappin").foregroundColor(event.type.color)
+                                Text(event.location)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#1C1C1E"))
+                            }
+                            HStack(spacing: 10) {
+                                Image(systemName: "person.2.fill").foregroundColor(event.type.color)
+                                Text("\(registeredCount) / \(event.maxCount) registered")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#1C1C1E"))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                        .background(Color.white)
+                        .cornerRadius(16)
+                        .padding(.horizontal, 20)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Registering as")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Color(hex: "#8E8E93"))
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(hex: "#E8472A"))
+                                        .frame(width: 40, height: 40)
+                                    Text(String(userName.prefix(2)).uppercased())
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                Text(userName)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#1C1C1E"))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                        .background(Color.white)
+                        .cornerRadius(16)
+                        .padding(.horizontal, 20)
+
+                        if !message.isEmpty {
+                            Text(message)
+                                .font(.system(size: 13))
+                                .foregroundColor(success ? Color(hex: "#34C759") : Color(hex: "#FF3B30"))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                        }
+
+                        if isRegistered {
+                            VStack(spacing: 12) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(Color(hex: "#34C759"))
+                                    Text("You are registered for this event")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(Color(hex: "#34C759"))
+                                }
+
+                                Button(action: { handleUnregister() }) {
+                                    Text(isLoading ? "Cancelling..." : "Cancel Registration")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(Color(hex: "#FF3B30"))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                        .background(Color(hex: "#FF3B30").opacity(0.1))
+                                        .cornerRadius(14)
+                                }
+                                .disabled(isLoading)
+                            }
+                            .padding(.horizontal, 20)
+                        } else if isFull {
+                            Text("This event is full")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(Color(hex: "#8E8E93"))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color(hex: "#F0F0F0"))
+                                .cornerRadius(14)
+                                .padding(.horizontal, 20)
+                        } else {
+                            Button(action: { handleRegister() }) {
+                                HStack {
+                                    if isLoading {
+                                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)).scaleEffect(0.9)
+                                    }
+                                    Text(isLoading ? "Registering..." : "Confirm Registration")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color(hex: "#E8472A"))
+                                .cornerRadius(14)
+                            }
+                            .disabled(isLoading)
+                            .padding(.horizontal, 20)
+                        }
+
+                        Spacer().frame(height: 20)
+                    }
+                }
+            }
+            .navigationTitle("Event Registration")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Close") { dismiss() }
+                        .foregroundColor(Color(hex: "#E8472A"))
+                }
+            }
+        }
+    }
+
+    private func handleRegister() {
+        isLoading = true
+        message = ""
+        regManager.register(eventId: event.id, userName: userName) { success, error in
+            isLoading = false
+            if success {
+                self.success = true
+                message = "Successfully registered!"
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
+            } else {
+                self.success = false
+                message = error ?? "Registration failed. Please try again."
+            }
+        }
+    }
+
+    private func handleUnregister() {
+        isLoading = true
+        regManager.unregister(eventId: event.id) { success in
+            isLoading = false
+            if success {
+                self.success = true
+                message = "Registration cancelled."
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
+            }
+        }
+    }
+}
+
 struct DayCell: View {
     let date: Date
     let isSelected: Bool
@@ -311,6 +582,13 @@ struct DayCell: View {
 
 struct EventCard: View {
     let event: CalendarEvent
+    @ObservedObject var regManager: EventRegistrationManager
+    let userName: String
+    let onRegisterTap: () -> Void
+
+    var registeredCount: Int { regManager.registrationCounts[event.id] ?? 0 }
+    var isRegistered: Bool { regManager.registeredEventIds.contains(event.id) }
+    var progress: Double { Double(registeredCount) / Double(event.maxCount) }
 
     private let timeFmt: DateFormatter = {
         let f = DateFormatter(); f.dateFormat = "h:mm a"; return f
@@ -322,7 +600,7 @@ struct EventCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top) {
                 Text(dateFmt.string(from: event.date))
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white)
@@ -330,9 +608,7 @@ struct EventCard: View {
                     .padding(.vertical, 5)
                     .background(event.type.color)
                     .cornerRadius(20)
-
                 Spacer()
-
                 Image(systemName: event.type.icon)
                     .font(.system(size: 16))
                     .foregroundColor(event.type.color)
@@ -355,25 +631,30 @@ struct EventCard: View {
                 }
                 HStack(spacing: 4) {
                     Image(systemName: "mappin").font(.system(size: 11)).foregroundColor(Color(hex: "#8E8E93"))
-                    Text(event.location)
-                        .font(.system(size: 11)).foregroundColor(Color(hex: "#8E8E93"))
+                    Text(event.location).font(.system(size: 11)).foregroundColor(Color(hex: "#8E8E93"))
                 }
             }
 
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
-                    Text("\(event.registeredCount) / \(event.maxCount) registered")
+                    Text("\(registeredCount) / \(event.maxCount) registered")
                         .font(.system(size: 11))
                         .foregroundColor(Color(hex: "#8E8E93"))
                     Spacer()
-                    Button(action: {}) {
-                        Text("Register")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
-                            .background(Color(hex: "#E8472A"))
-                            .cornerRadius(20)
+                    Button(action: onRegisterTap) {
+                        HStack(spacing: 4) {
+                            if isRegistered {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 12))
+                            }
+                            Text(isRegistered ? "Registered" : "Register")
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(isRegistered ? Color(hex: "#34C759") : Color(hex: "#E8472A"))
+                        .cornerRadius(20)
                     }
                 }
                 GeometryReader { geo in
@@ -381,7 +662,7 @@ struct EventCard: View {
                         RoundedRectangle(cornerRadius: 3).fill(Color(hex: "#E0DDD8")).frame(height: 5)
                         RoundedRectangle(cornerRadius: 3)
                             .fill(event.type.color)
-                            .frame(width: geo.size.width * event.registrationProgress, height: 5)
+                            .frame(width: geo.size.width * min(progress, 1.0), height: 5)
                     }
                 }
                 .frame(height: 5)
@@ -394,4 +675,4 @@ struct EventCard: View {
     }
 }
 
-#Preview { CalendarView(showSidebar: .constant(false)) }
+#Preview { CalendarView(showSidebar: .constant(false)).environmentObject(AppState.shared) }
